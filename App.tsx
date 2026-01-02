@@ -25,10 +25,17 @@ const App: React.FC = () => {
   });
 
   const [activeTab, setActiveTab] = useState<'home' | 'calendar' | 'memories'>('home');
-  const [message, setMessage] = useState<string>("Cargando tu mensaje de hoy...");
+  const [message, setMessage] = useState<string>("Cargando...");
   const [showSettings, setShowSettings] = useState(false);
   const [isAnniversaryDay, setIsAnniversaryDay] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  // Ocultar pantalla de carga al montar
+  useEffect(() => {
+    if (typeof (window as any).hideAppLoader === 'function') {
+      (window as any).hideAppLoader();
+    }
+  }, []);
 
   useEffect(() => {
     const handler = (e: any) => {
@@ -43,11 +50,9 @@ const App: React.FC = () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        setDeferredPrompt(null);
-      }
+      if (outcome === 'accepted') setDeferredPrompt(null);
     } else {
-      alert("Para descargar en tu iPhone/Android:\n\n1. Pulsa el botón 'Compartir'.\n2. Selecciona 'Añadir a la pantalla de inicio'.\n\n¡Así la tendrás como una app real! ❤️");
+      alert("Para descargar en tu iPhone/Android:\n\n1. Pulsa el botón 'Compartir' de tu navegador.\n2. Selecciona 'Añadir a la pantalla de inicio'.\n\n¡Así verás el corazón naranja en tu menú! ❤️");
     }
   };
 
@@ -58,14 +63,19 @@ const App: React.FC = () => {
     
     setIsAnniversaryDay(is27);
     
-    const msg = await generateRomanticMessage(isFeb && is27);
-    setMessage(msg);
+    // Si es febrero y es 27, forzar el mensaje pedido por el usuario
+    if (isFeb && is27) {
+      setMessage("Feliz aniversario mi amor y que sean muchos más");
+    } else {
+      const msg = await generateRomanticMessage(isFeb && is27);
+      setMessage(msg);
+    }
 
     if (is27 && "Notification" in window) {
       if (Notification.permission === "granted") {
         new Notification("¡Es nuestro día!", {
-          body: msg,
-          icon: "https://cdn-icons-png.flaticon.com/512/833/833472.png"
+          body: isFeb && is27 ? "Feliz aniversario mi amor y que sean muchos más" : "Hoy es nuestro día especial.",
+          icon: "https://img.icons8.com/emoji/512/orange-heart.png"
         });
       } else if (Notification.permission !== "denied") {
         Notification.requestPermission();
@@ -86,13 +96,8 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, backgroundType: type, background: value }));
   };
 
-  const addMemory = (memory: Memory) => {
-    setMemories(prev => [memory, ...prev]);
-  };
-
-  const deleteMemory = (id: string) => {
-    setMemories(prev => prev.filter(m => m.id !== id));
-  };
+  const addMemory = (memory: Memory) => setMemories(prev => [memory, ...prev]);
+  const deleteMemory = (id: string) => setMemories(prev => prev.filter(m => m.id !== id));
 
   const mainStyle = {
     background: state.backgroundType === 'image' ? `url(${state.background}) center/cover no-repeat fixed` : state.background,
@@ -102,11 +107,8 @@ const App: React.FC = () => {
 
   return (
     <div style={mainStyle} className="relative flex flex-col items-center px-6 pt-10 pb-32 overflow-x-hidden select-none">
-      {state.backgroundType === 'image' && (
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
-      )}
+      {state.backgroundType === 'image' && <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />}
 
-      {/* Header con Logo */}
       <header className="relative z-10 w-full flex justify-between items-center mb-10">
         <div className="flex items-center gap-3">
           <Logo className="w-12 h-12" />
@@ -120,7 +122,7 @@ const App: React.FC = () => {
             onClick={handleInstallClick}
             className="p-2 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/30 transition-all flex items-center gap-2"
           >
-            <Download className="w-5 h-5" />
+            <Download className="w-5 h-5 text-orange-400" />
             {deferredPrompt && <span className="text-[10px] font-bold pr-1">INSTALAR</span>}
           </button>
           <button 
@@ -132,9 +134,7 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Content Areas */}
       <main className="relative z-10 w-full max-w-lg flex flex-col items-center flex-grow">
-        
         {activeTab === 'home' && (
           <div className="w-full flex flex-col items-center gap-12 animate-fadeIn">
             <section className="text-center space-y-4 w-full">
@@ -142,12 +142,11 @@ const App: React.FC = () => {
                 <span className="text-white text-[10px] uppercase font-bold tracking-widest">Contigo todo es mejor</span>
               </div>
               <h2 className="text-white text-5xl font-romantic leading-tight drop-shadow-lg px-4">
-                {isAnniversaryDay ? "¡Feliz Aniversario!" : "Te amo cada día más"}
+                {isAnniversaryDay ? "¡Nuestro Día!" : "Te amo cada día más"}
               </h2>
               
-              {/* Logo central opcional para el Home */}
-              <div className="flex justify-center my-4 opacity-80">
-                <Logo className="w-24 h-24" />
+              <div className="flex justify-center my-4 opacity-90 drop-shadow-2xl">
+                <img src="https://img.icons8.com/emoji/512/orange-heart.png" className="w-24 h-24 animate-pulse" alt="Logo" />
               </div>
 
               <div className="bg-white/10 backdrop-blur-lg p-6 rounded-3xl border border-white/20 shadow-xl max-w-sm mx-auto">
@@ -156,7 +155,7 @@ const App: React.FC = () => {
                 </p>
                 <div className="flex justify-center gap-1 mt-4">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-3 h-3 text-yellow-300 fill-yellow-300 opacity-60" />
+                    <Star key={i} className="w-3 h-3 text-orange-300 fill-orange-300 opacity-60" />
                   ))}
                 </div>
               </div>
@@ -165,93 +164,52 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'calendar' && (
-          <section className="w-full animate-fadeIn">
-            <CalendarView />
-          </section>
-        )}
-
+        {activeTab === 'calendar' && <section className="w-full animate-fadeIn"><CalendarView /></section>}
         {activeTab === 'memories' && (
           <section className="w-full animate-fadeIn">
-            <MemoryGallery 
-              memories={memories} 
-              onAdd={addMemory} 
-              onDelete={deleteMemory} 
-            />
+            <MemoryGallery memories={memories} onAdd={addMemory} onDelete={deleteMemory} />
           </section>
         )}
       </main>
 
-      {/* Settings Panel */}
       <div className={`fixed inset-x-0 bottom-0 z-[60] transition-transform duration-500 transform ${showSettings ? 'translate-y-0' : 'translate-y-full'}`}>
         <div className="bg-white/10 backdrop-blur-2xl rounded-t-[40px] p-8 border-t border-white/20 shadow-[0_-10px_40px_rgba(0,0,0,0.3)]">
           <div className="w-12 h-1 bg-white/30 rounded-full mx-auto mb-6" onClick={() => setShowSettings(false)} />
-          <div className="space-y-8 max-w-lg mx-auto">
+          <div className="space-y-8 max-w-lg mx-auto text-white">
             <BackgroundPicker onSelect={updateBackground} />
-            
             <div className="flex flex-col gap-3">
               <span className="text-white/60 text-xs uppercase font-bold tracking-widest px-1">Acciones Rápidas</span>
               <div className="grid grid-cols-2 gap-4">
-                <button 
-                  onClick={() => checkAnniversary()}
-                  className="flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 text-white p-4 rounded-2xl border border-white/10 transition-all active:scale-95"
-                >
-                  <Bell className="w-5 h-5 text-blue-300" />
-                  <span className="text-sm font-medium">Notificar</span>
+                <button onClick={() => checkAnniversary()} className="flex items-center justify-center gap-3 bg-white/10 p-4 rounded-2xl border border-white/10">
+                  <Bell className="w-5 h-5 text-orange-300" />
+                  <span className="text-sm font-medium">Actualizar</span>
                 </button>
-                <button 
-                  onClick={() => {
-                    localStorage.clear();
-                    window.location.reload();
-                  }}
-                  className="flex items-center justify-center gap-3 bg-white/10 hover:bg-red-500/20 text-white p-4 rounded-2xl border border-white/10 transition-all"
-                >
+                <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="flex items-center justify-center gap-3 bg-white/10 p-4 rounded-2xl border border-white/10">
                   <Trash2 className="w-5 h-5 text-red-400" />
-                  <span className="text-sm font-medium">Reset App</span>
+                  <span className="text-sm font-medium">Limpiar</span>
                 </button>
               </div>
             </div>
-
-            <button 
-              onClick={() => setShowSettings(false)}
-              className="w-full bg-white text-pink-600 font-bold py-4 rounded-2xl shadow-lg"
-            >
-              Cerrar Ajustes
-            </button>
+            <button onClick={() => setShowSettings(false)} className="w-full bg-white text-pink-600 font-bold py-4 rounded-2xl">Cerrar</button>
           </div>
         </div>
       </div>
 
-      {/* Navbar inferior */}
       <nav className="fixed bottom-6 left-6 right-6 z-50 bg-white/20 backdrop-blur-md border border-white/30 h-16 rounded-3xl flex justify-around items-center px-4 shadow-xl">
-        <button 
-          onClick={() => setActiveTab('home')}
-          className={`p-3 rounded-2xl transition-all ${activeTab === 'home' ? 'bg-white/20 scale-110' : 'text-white/60'}`}
-        >
-          <Heart className={`w-6 h-6 ${activeTab === 'home' ? 'fill-white text-white' : ''}`} />
+        <button onClick={() => setActiveTab('home')} className={`p-3 rounded-2xl transition-all ${activeTab === 'home' ? 'bg-white/20 scale-110' : 'text-white/60'}`}>
+          <Heart className={`w-6 h-6 ${activeTab === 'home' ? 'fill-orange-400 text-orange-400' : ''}`} />
         </button>
-        <button 
-          onClick={() => setActiveTab('calendar')}
-          className={`p-3 rounded-2xl transition-all ${activeTab === 'calendar' ? 'bg-white/20 scale-110 text-white' : 'text-white/60'}`}
-        >
+        <button onClick={() => setActiveTab('calendar')} className={`p-3 rounded-2xl transition-all ${activeTab === 'calendar' ? 'bg-white/20 scale-110 text-white' : 'text-white/60'}`}>
           <Calendar className="w-6 h-6" />
         </button>
-        <button 
-          onClick={() => setActiveTab('memories')}
-          className={`p-3 rounded-2xl transition-all ${activeTab === 'memories' ? 'bg-white/20 scale-110 text-white' : 'text-white/60'}`}
-        >
+        <button onClick={() => setActiveTab('memories')} className={`p-3 rounded-2xl transition-all ${activeTab === 'memories' ? 'bg-white/20 scale-110 text-white' : 'text-white/60'}`}>
           <ImageIcon className="w-6 h-6" />
         </button>
       </nav>
 
       <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.4s ease-out forwards;
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
       `}} />
     </div>
   );

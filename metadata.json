@@ -1,11 +1,18 @@
 {
   "name": "Nuestra Historia - Love Anniversary",
-  "description": "Tu álbum de recuerdos y calendario de aniversario personalizado. Instálala en tu pantalla de inicio para usar como app nativa.",
+  "description": "Tu álbum de recuerdos y calendario de aniversario personalizado con corazón naranja.",
   "short_name": "Historia",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#ff758c",
   "theme_color": "#ff758c",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/emoji/512/orange-heart.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
   "requestFramePermissions": [
     "camera"
   ]

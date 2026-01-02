@@ -12,7 +12,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Historia">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/833/833472.png">
+    <link rel="apple-touch-icon" href="https://img.icons8.com/emoji/512/orange-heart.png">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -20,7 +20,7 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     
-    <!-- Babel para transpilar TSX en el navegador -->
+    <!-- Babel para transpilar TSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <style>
@@ -43,20 +43,34 @@
             justify-content: center;
             background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
             z-index: 9999;
-            color: white;
-            transition: opacity 0.5s;
+            transition: opacity 0.6s ease-out, visibility 0.6s;
+        }
+        #loading-screen.hidden-loader {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        @keyframes loading-bar {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
     </style>
 
     <script>
         window.process = { env: { API_KEY: "" } };
         
-        // Registro del Service Worker para PWA
+        // Función global para que React oculte el loader
+        window.hideAppLoader = function() {
+            const loader = document.getElementById('loading-screen');
+            if (loader) {
+                loader.classList.add('hidden-loader');
+                setTimeout(() => loader.remove(), 1000);
+            }
+        };
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('SW registrado', reg))
-                    .catch(err => console.log('Error SW', err));
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('Error SW', err));
             });
         }
     </script>
@@ -79,13 +93,12 @@
     <div id="loading-screen">
         <div class="flex flex-col items-center gap-6">
             <div class="relative w-24 h-24">
-              <svg viewBox="0 0 100 100" class="w-full h-full animate-pulse">
-                <path d="M50 88C50 88 15 65 15 38C15 22 28 12 42 12C46 12 50 14 50 14C50 14 54 12 58 12C72 12 85 22 85 38C85 65 50 88 50 88Z" fill="white" />
-              </svg>
+              <!-- Corazón naranja animado -->
+              <img src="https://img.icons8.com/emoji/512/orange-heart.png" class="w-full h-full animate-bounce" alt="Cargando..." />
             </div>
-            <p class="font-romantic text-3xl text-center px-4">Preparando nuestra historia...</p>
-            <div class="w-48 h-1 bg-white/20 rounded-full overflow-hidden">
-                <div class="h-full bg-white animate-[loading_2s_ease-in-out_infinite]"></div>
+            <p class="font-romantic text-3xl text-white text-center px-4">Preparando nuestra historia...</p>
+            <div class="w-48 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                <div class="h-full bg-orange-400 w-full animate-[loading-bar_1.5s_infinite]"></div>
             </div>
         </div>
     </div>
@@ -93,26 +106,5 @@
     <div id="root"></div>
 
     <script type="text/babel" data-presets="typescript,react" data-type="module" src="./index.tsx"></script>
-
-    <script>
-        const style = document.createElement('style');
-        style.innerHTML = `
-            @keyframes loading {
-                0% { transform: translateX(-100%); }
-                100% { transform: translateX(100%); }
-            }
-        `;
-        document.head.appendChild(style);
-
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const loader = document.getElementById('loading-screen');
-                if(loader) {
-                    loader.style.opacity = '0';
-                    setTimeout(() => loader.remove(), 500);
-                }
-            }, 1000);
-        });
-    </script>
 </body>
 </html>
