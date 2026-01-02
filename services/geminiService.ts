@@ -1,29 +1,45 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-// Initialize with process.env.API_KEY directly as a named parameter.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Función segura para obtener la API KEY
+const getApiKey = () => {
+  try {
+    // Intentamos obtenerla de process.env (inyectada por el entorno)
+    return (window as any).process?.env?.API_KEY || "";
+  } catch (e) {
+    return "";
+  }
+};
+
+const apiKey = getApiKey();
 
 export const generateRomanticMessage = async (isFebruary: boolean): Promise<string> => {
+  // Si no hay API KEY, devolvemos mensajes predeterminados para no romper la app
+  if (!apiKey) {
+    return isFebruary 
+      ? "Feliz aniversario mi amor y que sean muchos más ❤️" 
+      : "Cada segundo a tu lado es un tesoro que guardo en mi corazón.";
+  }
+
   try {
+    const ai = new GoogleGenAI({ apiKey });
     const prompt = isFebruary 
       ? "Genera un mensaje muy romántico y profundo para un aniversario que cae el 27 de febrero. Debe ser corto, dulce y terminar con 'Feliz aniversario mi amor y que sean muchos más'."
       : "Genera una frase corta y profundamente romántica para celebrar un mes más de novios (aniversario mensual del día 27). No uses hashtags.";
 
-    // Call generateContent with model name and contents.
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
         temperature: 0.9,
-        topP: 0.95,
       }
     });
 
-    // Extract text output using the .text property.
-    return response.text?.trim() || "Cada día a tu lado es un regalo.";
+    return response.text?.trim() || "Te amo más que ayer.";
   } catch (error) {
-    console.error("Error generating message:", error);
-    return isFebruary ? "Feliz aniversario mi amor y que sean muchos más" : "Te amo más que ayer.";
+    console.error("Error en Gemini:", error);
+    return isFebruary 
+      ? "Feliz aniversario mi amor y que sean muchos más" 
+      : "Eres lo mejor que me ha pasado en la vida.";
   }
 };
