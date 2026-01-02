@@ -1,0 +1,19 @@
+
+{
+  "name": "Nuestra Historia de Amor",
+  "short_name": "Historia",
+  "description": "Calendario de aniversario y álbum de recuerdos compartido.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ff758c",
+  "theme_color": "#ff758c",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/833/833472.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

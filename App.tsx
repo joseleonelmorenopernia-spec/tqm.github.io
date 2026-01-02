@@ -5,6 +5,7 @@ import Countdown from './components/Countdown';
 import CalendarView from './components/CalendarView';
 import BackgroundPicker from './components/BackgroundPicker';
 import MemoryGallery from './components/MemoryGallery';
+import Logo from './components/Logo';
 import { generateRomanticMessage } from './services/geminiService';
 import { AnniversaryState, Memory } from './types';
 
@@ -27,6 +28,28 @@ const App: React.FC = () => {
   const [message, setMessage] = useState<string>("Cargando tu mensaje de hoy...");
   const [showSettings, setShowSettings] = useState(false);
   const [isAnniversaryDay, setIsAnniversaryDay] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    } else {
+      alert("Para descargar en tu iPhone/Android:\n\n1. Pulsa el botón 'Compartir'.\n2. Selecciona 'Añadir a la pantalla de inicio'.\n\n¡Así la tendrás como una app real! ❤️");
+    }
+  };
 
   const checkAnniversary = useCallback(async () => {
     const today = new Date();
@@ -83,20 +106,22 @@ const App: React.FC = () => {
         <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
       )}
 
-      {/* Header */}
+      {/* Header con Logo */}
       <header className="relative z-10 w-full flex justify-between items-center mb-10">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-white/20 backdrop-blur-md rounded-full">
-            <Heart className="w-5 h-5 text-red-400 fill-red-400 animate-pulse" />
+        <div className="flex items-center gap-3">
+          <Logo className="w-12 h-12" />
+          <div>
+            <h1 className="text-white text-xl font-romantic tracking-wide leading-tight">Nuestra Historia</h1>
+            <p className="text-white/60 text-[8px] uppercase tracking-widest font-bold">Desde siempre</p>
           </div>
-          <h1 className="text-white text-xl font-romantic tracking-wide">Nuestra Historia</h1>
         </div>
         <div className="flex gap-2">
           <button 
-            onClick={() => alert("Para instalar como app: \n1. Pulsa el botón de compartir del navegador\n2. Selecciona 'Añadir a la pantalla de inicio'")}
-            className="p-2 bg-white/10 backdrop-blur-md rounded-full text-white"
+            onClick={handleInstallClick}
+            className="p-2 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/30 transition-all flex items-center gap-2"
           >
             <Download className="w-5 h-5" />
+            {deferredPrompt && <span className="text-[10px] font-bold pr-1">INSTALAR</span>}
           </button>
           <button 
             onClick={() => setShowSettings(!showSettings)}
@@ -112,13 +137,19 @@ const App: React.FC = () => {
         
         {activeTab === 'home' && (
           <div className="w-full flex flex-col items-center gap-12 animate-fadeIn">
-            <section className="text-center space-y-4">
+            <section className="text-center space-y-4 w-full">
               <div className="inline-block px-4 py-1 bg-white/20 backdrop-blur-md rounded-full border border-white/30 mb-2">
-                <span className="text-white text-[10px] uppercase font-bold tracking-widest">Desde siempre y para siempre</span>
+                <span className="text-white text-[10px] uppercase font-bold tracking-widest">Contigo todo es mejor</span>
               </div>
               <h2 className="text-white text-5xl font-romantic leading-tight drop-shadow-lg px-4">
                 {isAnniversaryDay ? "¡Feliz Aniversario!" : "Te amo cada día más"}
               </h2>
+              
+              {/* Logo central opcional para el Home */}
+              <div className="flex justify-center my-4 opacity-80">
+                <Logo className="w-24 h-24" />
+              </div>
+
               <div className="bg-white/10 backdrop-blur-lg p-6 rounded-3xl border border-white/20 shadow-xl max-w-sm mx-auto">
                 <p className="text-white/90 italic text-lg font-light leading-relaxed">
                   "{message}"
