@@ -1,0 +1,12 @@
+{
+  "name": "Nuestra Historia - Love Anniversary",
+  "description": "Tu álbum de recuerdos y calendario de aniversario personalizado. Instálala en tu pantalla de inicio para usar como app nativa.",
+  "short_name": "Historia",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ff758c",
+  "theme_color": "#ff758c",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
