@@ -6,21 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nuestra Historia</title>
     
-    <!-- PWA y Mobile Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ff758c">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Historia">
     <link rel="apple-touch-icon" href="https://img.icons8.com/emoji/512/orange-heart.png">
 
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
-    <!-- Babel para transpilar TSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <style>
@@ -28,13 +21,11 @@
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
-            overflow-x: hidden;
+            overflow: hidden;
             background-color: #ff758c;
             -webkit-tap-highlight-color: transparent;
         }
-        .font-romantic {
-            font-family: 'Dancing Script', cursive;
-        }
+        .font-romantic { font-family: 'Dancing Script', cursive; }
         #loading-screen {
             position: fixed;
             inset: 0;
@@ -43,45 +34,25 @@
             justify-content: center;
             background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
             z-index: 9999;
-            transition: opacity 0.6s ease-out, visibility 0.6s;
+            transition: opacity 0.5s ease-out;
         }
-        #loading-screen.hidden-loader {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
+        .hidden-loader { opacity: 0; pointer-events: none; }
+        @keyframes heart-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
-        @keyframes loading-bar {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
+        .animate-heart { animation: heart-pulse 1.5s infinite ease-in-out; }
     </style>
 
     <script>
         window.process = { env: { API_KEY: "" } };
-        
-        // Función global para que React oculte el loader
         window.hideAppLoader = function() {
             const loader = document.getElementById('loading-screen');
-            if (loader) {
-                loader.classList.add('hidden-loader');
-                setTimeout(() => loader.remove(), 1000);
-            }
+            if (loader) loader.classList.add('hidden-loader');
         };
-
-        // Failsafe: ocultar loader tras 5 segundos si algo falla
-        setTimeout(() => {
-            const loader = document.getElementById('loading-screen');
-            if (loader && !loader.classList.contains('hidden-loader')) {
-                console.warn("La app tarda demasiado en cargar, forzando cierre de loader...");
-                window.hideAppLoader();
-            }
-        }, 5000);
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => console.log('Error SW', err));
-            });
-        }
+        // Failsafe: Si en 4 segundos no ha cargado, forzamos la entrada
+        setTimeout(window.hideAppLoader, 4000);
     </script>
 
     <script type="importmap">
@@ -100,19 +71,12 @@
 </head>
 <body>
     <div id="loading-screen">
-        <div class="flex flex-col items-center gap-6">
-            <div class="relative w-24 h-24">
-              <img src="https://img.icons8.com/emoji/512/orange-heart.png" class="w-full h-full animate-bounce" alt="Cargando..." />
-            </div>
-            <p class="font-romantic text-3xl text-white text-center px-4">Preparando nuestra historia...</p>
-            <div class="w-48 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                <div class="h-full bg-orange-400 w-full animate-[loading-bar_1.5s_infinite]"></div>
-            </div>
+        <div class="flex flex-col items-center gap-4">
+            <img src="https://img.icons8.com/emoji/512/orange-heart.png" class="w-20 h-20 animate-heart" alt="Cargando">
+            <p class="font-romantic text-2xl text-white">Cargando nuestro amor...</p>
         </div>
     </div>
-
     <div id="root"></div>
-
     <script type="text/babel" data-presets="typescript,react" data-type="module" src="./index.tsx"></script>
 </body>
 </html>
