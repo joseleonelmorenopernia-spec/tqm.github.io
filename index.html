@@ -6,14 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nuestra Historia</title>
     
+    <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ff758c">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://img.icons8.com/emoji/512/orange-heart.png">
 
+    <!-- CSS & Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Scripts base -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <style>
@@ -21,11 +25,12 @@
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
-            overflow: hidden;
+            overflow-x: hidden;
             background-color: #ff758c;
             -webkit-tap-highlight-color: transparent;
         }
         .font-romantic { font-family: 'Dancing Script', cursive; }
+        
         #loading-screen {
             position: fixed;
             inset: 0;
@@ -37,23 +42,31 @@
             transition: opacity 0.5s ease-out;
         }
         .hidden-loader { opacity: 0; pointer-events: none; }
-        @keyframes heart-pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
+        
+        @keyframes pulse-orange {
+            0% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(255,165,0,0)); }
+            50% { transform: scale(1.1); filter: drop-shadow(0 0 20px rgba(255,165,0,0.6)); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(255,165,0,0)); }
         }
-        .animate-heart { animation: heart-pulse 1.5s infinite ease-in-out; }
+        .animate-love { animation: pulse-orange 2s infinite ease-in-out; }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide { animation: slideUp 0.6s ease-out forwards; }
+        
+        /* Hide scrollbar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
-
-    <script>
-        window.process = { env: { API_KEY: "" } };
-        window.hideAppLoader = function() {
-            const loader = document.getElementById('loading-screen');
-            if (loader) loader.classList.add('hidden-loader');
-        };
-        // Failsafe: Si en 4 segundos no ha cargado, forzamos la entrada
-        setTimeout(window.hideAppLoader, 4000);
-    </script>
 
     <script type="importmap">
 {
@@ -63,20 +76,257 @@
     "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
     "lucide-react": "https://esm.sh/lucide-react@0.460.0?external=react",
     "@google/genai": "https://esm.sh/@google/genai@1.34.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/"
   }
 }
 </script>
 </head>
 <body>
+    <!-- Pantalla de Carga -->
     <div id="loading-screen">
-        <div class="flex flex-col items-center gap-4">
-            <img src="https://img.icons8.com/emoji/512/orange-heart.png" class="w-20 h-20 animate-heart" alt="Cargando">
-            <p class="font-romantic text-2xl text-white">Cargando nuestro amor...</p>
+        <div class="flex flex-col items-center gap-6">
+            <img src="https://img.icons8.com/emoji/512/orange-heart.png" class="w-24 h-24 animate-love" alt="Cargando">
+            <p class="font-romantic text-3xl text-white drop-shadow-md">Nuestra Historia...</p>
         </div>
     </div>
+
     <div id="root"></div>
-    <script type="text/babel" data-presets="typescript,react" data-type="module" src="./index.tsx"></script>
+
+    <script type="text/babel" data-presets="typescript,react" data-type="module">
+        import React, { useState, useEffect, useCallback } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { Heart, Calendar, Settings, Bell, Star, Image as ImageIcon, Download, Trash2, Plus, Camera, X, Clock } from 'lucide-react';
+
+        // --- COMPONENTES ---
+
+        const Countdown = () => {
+            const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+            
+            const calculate = useCallback(() => {
+                const now = new Date();
+                let target = new Date(now.getFullYear(), now.getMonth(), 27);
+                if (now > target) {
+                    target = new Date(now.getFullYear(), now.getMonth() + 1, 27);
+                }
+                const diff = target.getTime() - now.getTime();
+                setTimeLeft({
+                    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+                    hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+                    minutes: Math.floor((diff / 1000 / 60) % 60),
+                    seconds: Math.floor((diff / 1000) % 60),
+                });
+            }, []);
+
+            useEffect(() => {
+                calculate();
+                const t = setInterval(calculate, 1000);
+                return () => clearInterval(t);
+            }, [calculate]);
+
+            const Block = ({ val, label }) => (
+                <div className="glass p-3 rounded-2xl w-16 text-center">
+                    <div className="text-xl font-bold text-white leading-none">{val}</div>
+                    <div className="text-[8px] text-white/60 uppercase mt-1 tracking-tighter">{label}</div>
+                </div>
+            );
+
+            return (
+                <div className="flex flex-col items-center gap-4">
+                    <p className="text-white/70 text-[10px] uppercase font-bold tracking-widest flex items-center gap-2">
+                        <Clock className="w-3 h-3" /> Próximo 27 en
+                    </p>
+                    <div className="flex gap-2">
+                        <Block val={timeLeft.days} label="Días" />
+                        <Block val={timeLeft.hours} label="Horas" />
+                        <Block val={timeLeft.minutes} label="Min" />
+                        <Block val={timeLeft.seconds} label="Seg" />
+                    </div>
+                </div>
+            );
+        };
+
+        const CalendarView = () => {
+            const months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            const today = new Date();
+            
+            return (
+                <div className="glass p-6 rounded-[32px] w-full max-w-sm animate-slide">
+                    <h3 className="text-white text-2xl font-romantic mb-6 text-center">Nuestros Días 27</h3>
+                    <div className="grid grid-cols-3 gap-3">
+                        {months.map((m, i) => {
+                            const isFeb = i === 1;
+                            const isPast = today > new Date(today.getFullYear(), i, 27);
+                            return (
+                                <div key={m} className={`p-3 rounded-2xl border flex flex-col items-center transition-all ${isPast ? 'bg-orange-500/30 border-orange-400/40' : 'bg-white/5 border-white/10'}`}>
+                                    <span className="text-[10px] text-white/50 uppercase font-medium">{m.substring(0, 3)}</span>
+                                    <span className="text-xl font-bold text-white">27</span>
+                                    {isFeb && <span className="text-[10px] mt-1">🧡</span>}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- APP PRINCIPAL ---
+
+        const App = () => {
+            const [bg, setBg] = useState(() => localStorage.getItem('love_bg_custom') || 'linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%)');
+            const [activeTab, setActiveTab] = useState('home');
+            const [showSettings, setShowSettings] = useState(false);
+            const [message, setMessage] = useState("Cargando...");
+            const [memories, setMemories] = useState(() => JSON.parse(localStorage.getItem('love_memories_data') || '[]'));
+
+            useEffect(() => {
+                // Ocultar pantalla de carga
+                const loader = document.getElementById('loading-screen');
+                if (loader) loader.classList.add('hidden-loader');
+                
+                checkAnniversary();
+            }, []);
+
+            const checkAnniversary = () => {
+                const today = new Date();
+                const day = today.getDate();
+                const month = today.getMonth(); // 1 es Febrero
+                
+                if (month === 1 && day === 27) {
+                    setMessage("Feliz aniversario mi amor y que sean muchos más");
+                } else if (day === 27) {
+                    setMessage("¡Hoy es nuestro día especial! ❤️");
+                } else {
+                    setMessage("Cada día a tu lado es el mejor regalo.");
+                }
+            };
+
+            const handleInstall = () => {
+                alert("🧡 Para instalar en tu pantalla:\n1. Pulsa 'Compartir'\n2. 'Añadir a pantalla de inicio'\n¡Así verás el corazón naranja siempre!");
+            };
+
+            return (
+                <div 
+                    style={{ background: bg, minHeight: '100vh', transition: 'background 0.8s ease' }} 
+                    className="flex flex-col items-center p-6 pb-32 overflow-hidden relative"
+                >
+                    {/* Header */}
+                    <header className="w-full flex justify-between items-center mb-10 z-10 animate-slide">
+                        <div className="flex items-center gap-3">
+                            <img src="https://img.icons8.com/emoji/512/orange-heart.png" className="w-10 h-10 drop-shadow-md" alt="L" />
+                            <div>
+                                <h1 className="text-white text-xl font-romantic leading-none">Nuestra Historia</h1>
+                                <span className="text-[8px] text-white/50 uppercase tracking-[0.2em]">Eternamente</span>
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={handleInstall} className="p-2.5 glass rounded-full text-orange-400 hover:scale-110 active:scale-95 transition-all">
+                                <Download size={20} />
+                            </button>
+                            <button onClick={() => setShowSettings(true)} className="p-2.5 glass rounded-full text-white hover:scale-110 active:scale-95 transition-all">
+                                <Settings size={20} />
+                            </button>
+                        </div>
+                    </header>
+
+                    {/* Main Content */}
+                    <main className="w-full max-w-md flex flex-col items-center flex-grow z-10">
+                        {activeTab === 'home' && (
+                            <div className="flex flex-col items-center gap-10 text-center animate-slide">
+                                <div className="space-y-2">
+                                    <h2 className="text-white text-5xl font-romantic drop-shadow-lg">
+                                        {new Date().getDate() === 27 ? "¡Nuestro Día!" : "Te Amo"}
+                                    </h2>
+                                    <div className="h-1 w-12 bg-orange-400 mx-auto rounded-full opacity-60"></div>
+                                </div>
+
+                                <img src="https://img.icons8.com/emoji/512/orange-heart.png" className="w-28 h-28 animate-love my-4" />
+
+                                <div className="glass p-8 rounded-[40px] shadow-2xl relative overflow-hidden group">
+                                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-orange-400 to-transparent opacity-30"></div>
+                                    <p className="text-white text-xl font-light italic leading-relaxed">
+                                        "{message}"
+                                    </p>
+                                    <div className="flex justify-center gap-1 mt-4">
+                                        {[1,2,3].map(i => <Star key={i} size={12} className="text-orange-300 fill-orange-300" />)}
+                                    </div>
+                                </div>
+
+                                <Countdown />
+                            </div>
+                        )}
+
+                        {activeTab === 'calendar' && <CalendarView />}
+
+                        {activeTab === 'memories' && (
+                            <div className="w-full animate-slide flex flex-col gap-6">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-white text-3xl font-romantic">Nuestras Fotos</h3>
+                                    <button className="glass p-2 rounded-full text-white"><Plus /></button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {memories.length === 0 ? (
+                                        <div className="col-span-2 py-20 glass rounded-3xl text-center">
+                                            <ImageIcon className="mx-auto text-white/20 mb-2" size={40} />
+                                            <p className="text-white/40 text-sm">Próximamente álbum compartido...</p>
+                                        </div>
+                                    ) : (
+                                        memories.map(m => (
+                                            <div key={m.id} className="glass rounded-2xl overflow-hidden aspect-square border-none">
+                                                <img src={m.url} className="w-full h-full object-cover" />
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </main>
+
+                    {/* Nav Bar */}
+                    <nav className="fixed bottom-8 left-8 right-8 h-16 glass rounded-[24px] flex justify-around items-center z-50 shadow-2xl">
+                        <button onClick={() => setActiveTab('home')} className={`p-4 transition-all duration-300 ${activeTab === 'home' ? 'text-orange-400 scale-125' : 'text-white/40'}`}>
+                            <Heart fill={activeTab === 'home' ? "currentColor" : "none"} size={26} />
+                        </button>
+                        <button onClick={() => setActiveTab('calendar')} className={`p-4 transition-all duration-300 ${activeTab === 'calendar' ? 'text-white scale-125' : 'text-white/40'}`}>
+                            <Calendar size={26} />
+                        </button>
+                        <button onClick={() => setActiveTab('memories')} className={`p-4 transition-all duration-300 ${activeTab === 'memories' ? 'text-white scale-125' : 'text-white/40'}`}>
+                            <ImageIcon size={26} />
+                        </button>
+                    </nav>
+
+                    {/* Settings Modal */}
+                    {showSettings && (
+                        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-end">
+                            <div className="w-full bg-white/95 rounded-t-[40px] p-8 pb-12 animate-slide">
+                                <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-8" onClick={() => setShowSettings(false)}></div>
+                                <h4 className="text-pink-600 font-bold text-center mb-6 uppercase tracking-widest text-xs">Personalizar Fondo</h4>
+                                <div className="grid grid-cols-4 gap-4 mb-10">
+                                    {[
+                                        'linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%)',
+                                        'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                                        'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+                                        '#1a1a1a'
+                                    ].map(c => (
+                                        <button 
+                                            key={c}
+                                            onClick={() => { setBg(c); localStorage.setItem('love_bg_custom', c); }}
+                                            className="aspect-square rounded-2xl border-4 border-white shadow-lg"
+                                            style={{ background: c }}
+                                        />
+                                    ))}
+                                </div>
+                                <button onClick={() => setShowSettings(false)} className="w-full bg-pink-500 text-white py-4 rounded-2xl font-bold shadow-xl active:scale-95 transition-all">
+                                    Listo
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
