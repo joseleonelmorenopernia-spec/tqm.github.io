@@ -4,14 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nuestra Historia</title>
+    <title>TQM</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ff758c">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Historia">
+    <meta name="apple-mobile-web-app-title" content="TQM">
     <link rel="apple-touch-icon" href="https://img.icons8.com/emoji/512/orange-heart.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -19,7 +19,7 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <style>
-        body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: #ff758c; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: #ff758c; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
         .font-romantic { font-family: 'Dancing Script', cursive; }
         #loading-screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%); z-index: 9999; transition: opacity 0.5s ease-out; }
         .hidden-loader { opacity: 0; pointer-events: none; }
@@ -51,16 +51,62 @@
     <div id="loading-screen">
         <div class="flex flex-col items-center gap-6">
             <img src="https://img.icons8.com/emoji/512/orange-heart.png" class="w-24 h-24 animate-love" alt="Cargando">
-            <p class="font-romantic text-3xl text-white">Nuestra Historia...</p>
+            <p class="font-romantic text-3xl text-white">TQM...</p>
         </div>
     </div>
 
     <div id="root"></div>
 
     <script type="text/babel" data-presets="typescript,react" data-type="module">
-        import React, { useState, useEffect } from 'react';
+        import React, { useState, useEffect, useCallback } from 'react';
         import { createRoot } from 'react-dom/client';
-        import { Heart, Calendar, Settings, Image as ImageIcon, Download, X, Share } from 'lucide-react';
+        import { Heart, Calendar, Settings, Image as ImageIcon, Download, X, Share, Clock } from 'lucide-react';
+
+        const Countdown = () => {
+            const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+            const calculate = useCallback(() => {
+                const now = new Date();
+                let target = new Date(now.getFullYear(), now.getMonth(), 27);
+                if (now >= target) {
+                    target = new Date(now.getFullYear(), now.getMonth() + 1, 27);
+                }
+                const diff = target.getTime() - now.getTime();
+                setTimeLeft({
+                    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+                    hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+                    minutes: Math.floor((diff / 1000 / 60) % 60),
+                    seconds: Math.floor((diff / 1000) % 60),
+                });
+            }, []);
+
+            useEffect(() => {
+                calculate();
+                const timer = setInterval(calculate, 1000);
+                return () => clearInterval(timer);
+            }, [calculate]);
+
+            const Unit = ({ val, label }) => (
+                <div className="flex flex-col items-center glass px-3 py-2 rounded-xl min-w-[60px]">
+                    <span className="text-white font-bold text-xl leading-none">{val}</span>
+                    <span className="text-white/60 text-[8px] uppercase font-bold mt-1">{label}</span>
+                </div>
+            );
+
+            return (
+                <div className="flex flex-col items-center gap-3 animate-slide" style={{ animationDelay: '0.2s' }}>
+                    <p className="text-white/80 text-[10px] uppercase font-bold tracking-widest flex items-center gap-2">
+                        <Clock size={12} className="text-orange-400" /> Falta para el 27:
+                    </p>
+                    <div className="flex gap-2">
+                        <Unit val={timeLeft.days} label="Días" />
+                        <Unit val={timeLeft.hours} label="Horas" />
+                        <Unit val={timeLeft.minutes} label="Min" />
+                        <Unit val={timeLeft.seconds} label="Seg" />
+                    </div>
+                </div>
+            );
+        };
 
         const App = () => {
             const [bg, setBg] = useState(() => localStorage.getItem('love_bg_custom') || 'linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%)');
@@ -69,24 +115,34 @@
             const [showInstallGuide, setShowInstallGuide] = useState(false);
             const [deferredPrompt, setDeferredPrompt] = useState(null);
             const [isIOS, setIsIOS] = useState(false);
+            const [message, setMessage] = useState("");
 
             useEffect(() => {
                 // Registrar Service Worker
                 if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.register('./sw.js')
-                        .then(reg => console.log('SW Registered', reg))
-                        .catch(err => console.log('SW Error', err));
+                    navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Error', err));
                 }
 
-                // Detectar plataforma
                 const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
                 setIsIOS(isIosDevice);
 
-                // Capturar prompt de instalación (Chrome/Android)
                 window.addEventListener('beforeinstallprompt', (e) => {
                     e.preventDefault();
                     setDeferredPrompt(e);
                 });
+
+                // Determinar mensaje
+                const now = new Date();
+                const day = now.getDate();
+                const month = now.getMonth(); // Febrero es 1
+
+                if (month === 1 && day === 27) {
+                    setMessage("Feliz aniversario mi amor y que sean muchos más");
+                } else if (day === 27) {
+                    setMessage("¡Hoy es nuestro día especial! ❤️");
+                } else {
+                    setMessage("Cada día a tu lado es el mejor regalo.");
+                }
 
                 // Ocultar loader
                 const loader = document.getElementById('loading-screen');
@@ -106,10 +162,10 @@
             return (
                 <div style={{ background: bg, minHeight: '100vh', transition: 'background 0.8s' }} className="flex flex-col items-center p-6 pb-32 overflow-hidden relative">
                     
-                    <header className="w-full flex justify-between items-center mb-10 z-10 animate-slide">
+                    <header className="w-full flex justify-between items-center mb-8 z-10 animate-slide">
                         <div className="flex items-center gap-3">
                             <img src="https://img.icons8.com/emoji/512/orange-heart.png" className="w-10 h-10 drop-shadow-md" alt="Logo" />
-                            <h1 className="text-white text-xl font-romantic leading-none">Nuestra Historia</h1>
+                            <h1 className="text-white text-3xl font-romantic leading-none">TQM</h1>
                         </div>
                         <div className="flex gap-2">
                             <button onClick={handleInstall} className={`p-2.5 glass rounded-full flex items-center gap-2 transition-all active:scale-95 ${deferredPrompt ? 'bg-orange-400 text-white animate-bounce' : 'text-orange-400'}`}>
@@ -124,31 +180,35 @@
 
                     <main className="w-full max-w-md flex flex-col items-center flex-grow z-10">
                         {activeTab === 'home' && (
-                            <div className="flex flex-col items-center gap-8 text-center animate-slide">
-                                <h2 className="text-white text-4xl font-romantic drop-shadow-lg">
-                                    {new Date().getDate() === 27 ? "¡Nuestro Día!" : "Te Amo"}
+                            <div className="flex flex-col items-center gap-10 text-center animate-slide">
+                                <h2 className="text-white text-5xl font-romantic drop-shadow-lg">
+                                    {new Date().getDate() === 27 ? "¡Nuestro Día!" : "Siempre Juntos"}
                                 </h2>
+                                
                                 <img src="https://img.icons8.com/emoji/512/orange-heart.png" className="w-32 h-32 animate-love" />
-                                <div className="glass p-8 rounded-[40px] shadow-2xl">
-                                    <p className="text-white text-xl font-light italic">
-                                        {new Date().getMonth() === 1 && new Date().getDate() === 27 
-                                            ? "Feliz aniversario mi amor y que sean muchos más" 
-                                            : "Cada día a tu lado es el mejor regalo."}
+                                
+                                <div className="glass p-8 rounded-[40px] shadow-2xl relative">
+                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-orange-400 text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-widest">
+                                        Para Ti
+                                    </div>
+                                    <p className="text-white text-2xl font-romantic leading-relaxed">
+                                        "{message}"
                                     </p>
                                 </div>
-                                <div className="glass px-6 py-3 rounded-2xl text-white font-bold text-lg">Próximo 27: Cada mes</div>
+
+                                <Countdown />
                             </div>
                         )}
 
                         {activeTab === 'calendar' && (
                             <div className="glass p-6 rounded-[32px] w-full max-w-sm animate-slide">
-                                <h3 className="text-white text-2xl font-romantic mb-6 text-center">Calendario de Amor</h3>
+                                <h3 className="text-white text-2xl font-romantic mb-6 text-center">Nuestros Días 27</h3>
                                 <div className="grid grid-cols-3 gap-3">
                                     {["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"].map((m, i) => (
-                                        <div key={m} className={`p-3 rounded-2xl border flex flex-col items-center ${i === 1 ? 'bg-orange-500/30 border-orange-400/40' : 'bg-white/5 border-white/10'}`}>
-                                            <span className="text-[10px] text-white/50 uppercase">{m}</span>
+                                        <div key={m} className={`p-3 rounded-2xl border flex flex-col items-center transition-all ${i === 1 ? 'bg-orange-500/30 border-orange-400/40' : 'bg-white/5 border-white/10'}`}>
+                                            <span className="text-[10px] text-white/50 uppercase font-bold">{m}</span>
                                             <span className="text-xl font-bold text-white">27</span>
-                                            {i === 1 && <span className="text-[10px]">🧡</span>}
+                                            {i === 1 && <span className="text-[12px] mt-1">🧡</span>}
                                         </div>
                                     ))}
                                 </div>
@@ -158,62 +218,63 @@
                         {activeTab === 'memories' && (
                             <div className="w-full text-center py-20 glass rounded-3xl animate-slide text-white/40">
                                 <ImageIcon className="mx-auto mb-4" size={48} />
-                                <p>Álbum de fotos disponible pronto</p>
+                                <p className="font-romantic text-xl text-white">Próximamente fotos...</p>
                             </div>
                         )}
                     </main>
 
                     <nav className="fixed bottom-8 left-8 right-8 h-16 glass rounded-[24px] flex justify-around items-center z-50">
-                        <button onClick={() => setActiveTab('home')} className={`p-4 ${activeTab === 'home' ? 'text-orange-400 scale-125' : 'text-white/40'}`}>
+                        <button onClick={() => setActiveTab('home')} className={`p-4 transition-all ${activeTab === 'home' ? 'text-orange-400 scale-125' : 'text-white/40'}`}>
                             <Heart fill={activeTab === 'home' ? "currentColor" : "none"} size={26} />
                         </button>
-                        <button onClick={() => setActiveTab('calendar')} className={`p-4 ${activeTab === 'calendar' ? 'text-white scale-125' : 'text-white/40'}`}>
+                        <button onClick={() => setActiveTab('calendar')} className={`p-4 transition-all ${activeTab === 'calendar' ? 'text-white scale-125' : 'text-white/40'}`}>
                             <Calendar size={26} />
                         </button>
-                        <button onClick={() => setActiveTab('memories')} className={`p-4 ${activeTab === 'memories' ? 'text-white scale-125' : 'text-white/40'}`}>
+                        <button onClick={() => setActiveTab('memories')} className={`p-4 transition-all ${activeTab === 'memories' ? 'text-white scale-125' : 'text-white/40'}`}>
                             <ImageIcon size={26} />
                         </button>
                     </nav>
 
-                    {/* Guía de Instalación */}
                     {showInstallGuide && (
                         <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center p-6">
                             <div className="bg-white rounded-[32px] p-8 max-w-xs w-full animate-slide text-center relative">
                                 <button onClick={() => setShowInstallGuide(false)} className="absolute top-4 right-4 text-gray-400"><X /></button>
                                 <img src="https://img.icons8.com/emoji/512/orange-heart.png" className="w-16 h-16 mx-auto mb-4" />
-                                <h3 className="text-pink-600 font-bold text-xl mb-4">Instalar App</h3>
+                                <h3 className="text-orange-500 font-bold text-xl mb-4">Instalar TQM</h3>
                                 <div className="text-left space-y-4 text-sm text-gray-600">
                                     {isIOS ? (
                                         <>
-                                            <p>1. Toca el botón de <b>Compartir</b> <Share className="inline w-4 h-4"/> abajo.</p>
-                                            <p>2. Busca <b>"Añadir a pantalla de inicio"</b>.</p>
-                                            <p>3. Pulsa <b>Añadir</b> arriba a la derecha.</p>
+                                            <p>1. Toca <b>Compartir</b> <Share className="inline w-4 h-4 text-blue-500"/> abajo.</p>
+                                            <p>2. Elige <b>"Añadir a pantalla de inicio"</b>.</p>
                                         </>
                                     ) : (
                                         <>
-                                            <p>1. Toca los <b>3 puntos</b> ⋮ arriba a la derecha.</p>
+                                            <p>1. Toca los <b>3 puntos</b> ⋮ arriba.</p>
                                             <p>2. Selecciona <b>"Instalar aplicación"</b>.</p>
-                                            <p>3. Confirma la instalación.</p>
                                         </>
                                     )}
                                 </div>
-                                <button onClick={() => setShowInstallGuide(false)} className="mt-6 w-full bg-pink-500 text-white py-3 rounded-xl font-bold">Entendido 🧡</button>
+                                <button onClick={() => setShowInstallGuide(false)} className="mt-6 w-full bg-orange-500 text-white py-3 rounded-xl font-bold">¡Lo tengo! 🧡</button>
                             </div>
                         </div>
                     )}
 
-                    {/* Ajustes */}
                     {showSettings && (
                         <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-end">
                             <div className="w-full bg-white rounded-t-[40px] p-8 animate-slide">
                                 <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-8" onClick={() => setShowSettings(false)}></div>
-                                <h4 className="text-pink-600 font-bold text-center mb-6 uppercase text-xs">Fondo de la App</h4>
+                                <h4 className="text-orange-600 font-bold text-center mb-6 uppercase text-xs tracking-widest">Fondo de Pantalla</h4>
                                 <div className="grid grid-cols-4 gap-4 mb-8">
-                                    {['linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%)', '#1a1a1a', '#ff9a9e', '#a18cd1'].map(c => (
-                                        <button key={c} onClick={() => { setBg(c); localStorage.setItem('love_bg_custom', c); }} className="aspect-square rounded-2xl border-2 border-white shadow-md" style={{ background: c }} />
+                                    {[
+                                        'linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%)',
+                                        'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)',
+                                        '#1a1a1a',
+                                        'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)'
+                                    ].map(c => (
+                                        <button key={c} onClick={() => { setBg(c); localStorage.setItem('love_bg_custom', c); }} className="aspect-square rounded-2xl border-2 border-white shadow-md active:scale-90 transition-transform" style={{ background: c }} />
                                     ))}
                                 </div>
-                                <button onClick={() => setShowSettings(false)} className="w-full bg-pink-500 text-white py-4 rounded-xl font-bold">Hecho</button>
+                                <button onClick={() => setShowSettings(false)} className="w-full bg-orange-500 text-white py-4 rounded-xl font-bold shadow-lg">Hecho 🧡</button>
                             </div>
                         </div>
                     )}

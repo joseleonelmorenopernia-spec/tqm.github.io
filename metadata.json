@@ -1,7 +1,7 @@
 {
-  "name": "Nuestra Historia - Love Anniversary",
+  "name": "TQM",
   "description": "Tu álbum de recuerdos y calendario de aniversario personalizado con corazón naranja.",
-  "short_name": "Historia",
+  "short_name": "TQM",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#ff758c",

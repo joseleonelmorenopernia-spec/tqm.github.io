@@ -1,8 +1,8 @@
 
 {
-  "name": "Nuestra Historia de Amor",
-  "short_name": "Historia",
-  "description": "Calendario de aniversario y álbum de recuerdos compartido.",
+  "name": "TQM",
+  "short_name": "TQM",
+  "description": "Nuestra historia de amor - Cada 27 es especial.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
