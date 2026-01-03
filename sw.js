@@ -1,11 +1,12 @@
 
-const CACHE_NAME = 'love-app-v2';
+const CACHE_NAME = 'love-app-v3';
 const ASSETS = [
   './',
   './index.html',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/@babel/standalone/babel.min.js',
-  'https://img.icons8.com/emoji/512/orange-heart.png'
+  'https://img.icons8.com/emoji/512/orange-heart.png',
+  'https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3'
 ];
 
 self.addEventListener('install', (event) => {
@@ -31,6 +32,25 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request);
+    })
+  );
+});
+
+// Manejar clic en notificación para abrir la app
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      if (clientList.length > 0) {
+        let client = clientList[0];
+        for (let i = 0; i < clientList.length; i++) {
+          if (clientList[i].focused) {
+            client = clientList[i];
+          }
+        }
+        return client.focus();
+      }
+      return clients.openWindow('./');
     })
   );
 });

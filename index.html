@@ -64,6 +64,9 @@
         import { Heart, Calendar, Settings, Image as ImageIcon, Download, X, Share, Clock, Plus, Trash2, Camera, Bell, BellRing } from 'lucide-react';
         import { GoogleGenAI } from "@google/genai";
 
+        // URL del sonido de notificación (un sonido suave y mágico)
+        const NOTIFICATION_SOUND_URL = "https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3";
+
         // Componente de Cronómetro
         const Countdown = () => {
             const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -155,6 +158,44 @@
                 if (loader) loader.classList.add('hidden-loader');
             }, []);
 
+            // Función auxiliar para reproducir sonido
+            const playNotificationSound = () => {
+                try {
+                    const audio = new Audio(NOTIFICATION_SOUND_URL);
+                    audio.volume = 0.8;
+                    audio.play().catch(e => console.log("Audio play failed (user interaction needed first)", e));
+                } catch (e) {
+                    console.error("Error playing sound", e);
+                }
+            };
+
+            // Función para enviar notificación usando Service Worker (Corrige el problema de la URL)
+            const showNotification = async (title, body) => {
+                if (!('serviceWorker' in navigator)) return;
+                
+                try {
+                    const registration = await navigator.serviceWorker.ready;
+                    
+                    // Reproducir sonido
+                    playNotificationSound();
+
+                    // Mostrar notificación nativa
+                    await registration.showNotification(title, {
+                        body: body,
+                        icon: "https://img.icons8.com/emoji/512/orange-heart.png",
+                        badge: "https://img.icons8.com/emoji/512/orange-heart.png",
+                        vibrate: [200, 100, 200, 100, 400],
+                        tag: 'daily-love-msg',
+                        renotify: true,
+                        data: { url: window.location.href } // Para abrir la app al tocar
+                    });
+                } catch (e) {
+                    console.error("Error mostrando notificación", e);
+                    // Fallback para notificación básica
+                    new Notification(title, { body, icon: "https://img.icons8.com/emoji/512/orange-heart.png" });
+                }
+            };
+
             // --- SISTEMA DE NOTIFICACIONES ZONA HORARIA VENEZUELA ---
             const checkTimeAndNotify = useCallback(() => {
                 if (!notificationsEnabled || !('Notification' in window) || Notification.permission !== 'granted') return;
@@ -174,20 +215,13 @@
                 // - Si la hora en Caracas es >= 6 (6 AM)
                 // - Y la fecha registrada no es la de hoy (no se ha enviado hoy)
                 if (currentHour >= 6 && lastSentDate !== todayInVenezuela) {
-                    try {
-                        new Notification("Buenos días mi amor 🧡", {
-                            body: message || "Recuerda que te quiero mucho.",
-                            icon: "https://img.icons8.com/emoji/512/orange-heart.png",
-                            badge: "https://img.icons8.com/emoji/512/orange-heart.png",
-                            vibrate: [200, 100, 200],
-                            tag: 'daily-love-msg'
-                        });
-                        
-                        // Marcar como enviado hoy
-                        localStorage.setItem('tqm_last_notif_date_vzla', todayInVenezuela);
-                    } catch (e) {
-                        console.error("Error notificación:", e);
-                    }
+                    // Texto seguro
+                    const msgBody = message || "Recuerda que te quiero mucho.";
+                    
+                    showNotification("Buenos días mi amor 🧡", msgBody);
+                    
+                    // Marcar como enviado hoy
+                    localStorage.setItem('tqm_last_notif_date_vzla', todayInVenezuela);
                 }
             }, [notificationsEnabled, message]);
 
@@ -220,12 +254,13 @@
                     if (permission === 'granted') {
                         setNotificationsEnabled(true);
                         localStorage.setItem('tqm_notifications', 'true');
-                        // Resetear fecha para permitir prueba inmediata si ya son las 6
-                        // localStorage.removeItem('tqm_last_notif_date_vzla'); 
-                        new Notification("¡TQM Activado!", { 
-                            body: "Te avisaré a las 6:00 AM (Hora Caracas) ❤️", 
-                            icon: "https://img.icons8.com/emoji/512/orange-heart.png" 
-                        });
+                        
+                        // Sonido de confirmación
+                        playNotificationSound();
+                        
+                        // Enviar notificación de prueba técnica (usando el nuevo método)
+                        showNotification("¡TQM Activado!", "Te avisaré a las 6:00 AM (Hora Caracas) ❤️");
+
                     } else {
                         alert("Necesitas dar permiso en los ajustes de tu navegador.");
                     }
@@ -237,15 +272,11 @@
 
             const sendTestNotification = async () => {
                 if (Notification.permission === 'granted') {
-                    new Notification("Prueba Exitosa 🧡", { 
-                        body: message || "Así llegarán tus mensajes a las 6 AM VZLA.", 
-                        icon: "https://img.icons8.com/emoji/512/orange-heart.png",
-                        vibrate: [200, 100, 200]
-                    });
+                    showNotification("Prueba Exitosa 🧡", message || "Así llegarán tus mensajes a las 6 AM VZLA.");
                 } else {
                     const permission = await Notification.requestPermission();
                     if (permission === 'granted') {
-                        new Notification("Prueba Exitosa 🧡", { body: "¡Permiso concedido!", icon: "https://img.icons8.com/emoji/512/orange-heart.png" });
+                        showNotification("Prueba Exitosa 🧡", "¡Permiso concedido!");
                     } else {
                         alert("No tienes permisos activados.");
                     }
