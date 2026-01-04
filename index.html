@@ -79,10 +79,13 @@
         // CONFIGURACIÓN DE NOTIFICACIONES "RICH MEDIA"
         const NOTIFICATION_SOUND_URL = "https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3";
         const NOTIFICATION_ICON_URL = "https://img.icons8.com/emoji/512/orange-heart.png";
-        // Usamos un icono monocromático pequeño para el badge (insignia)
-        const NOTIFICATION_BADGE_URL = "https://img.icons8.com/ios-filled/96/ffffff/like.png";
         
-        // Imagen optimizada (HTTPS, CORS enabled, dimensiones correctas)
+        // TRUCO PARA QUITAR EL LOGO DE CHROME:
+        // El badge debe ser una imagen monocromática (blanco y transparente) codificada en base64.
+        // Si usamos una imagen de color, Android pone el logo de Chrome.
+        const NOTIFICATION_BADGE_DATA = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAQAAABIkb+zAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAAmJLR0QA/4ePzL8AAAAHdElNRQfpAxwQDwosY/yZAAAA6ElEQVR42u3bvQ3CMBCA4Y8iF6FkBWZgDzpWYAVKOmQJKhQpUqSIgCKypE7+K0Vy/sQ+3/WOFz9JAgAA8F99o1adB6fCqQ4AAAAAAAAAAAAAAIAmh2F13h9O3u/fD6d+uYyqAgAAAAAAAACAe2s1a9V5dCq86y0gIAAAAAAAAADg3l6F1Xl/OHm/f3k49ctlVBUAAAAAAAAAANxbr1mnzsOp8K23gIAAAAAAAAAAgHu7F1bn/eHk/f7t4dQvl1FVAAAAAAAAAABwb51mnToPp8Kz3gICAAAAAAAAAODeHoXVeX84eb9/ezj1y2VUFQAAAAAAAAAA/M0Xf44k96W75fMAAAAASUVORK5CYII=";
+        
+        // Imagen principal
         const NOTIFICATION_IMAGE_URL = "https://images.unsplash.com/photo-1518568814500-bf5f8ca12f69?auto=format&fit=crop&w=1000&h=500&q=80"; 
 
         // Lista de frases románticas
@@ -575,42 +578,34 @@
                 }
             };
 
-            // ---- FUNCIÓN DE NOTIFICACIÓN MEJORADA (RICH NOTIFICATION 100% SECURE) ----
+            // ---- FUNCIÓN DE NOTIFICACIÓN MEJORADA (NATIVE STYLE) ----
             const showNotification = async (title, body, isTest = false) => {
                 if (!('serviceWorker' in navigator)) return;
                 
                 try {
                     playNotificationSound();
 
-                    // TRUCO PARA EL 100%: Forzamos al navegador a descargar la imagen
-                    // en segundo plano ANTES de pedir la notificación.
-                    // Esto asegura que esté "caliente" en la caché de red.
                     if (isTest) {
                         try {
                             await fetch(NOTIFICATION_IMAGE_URL, { mode: 'no-cors' });
-                            console.log("Imagen pre-cargada para test");
-                        } catch (err) {
-                            console.log("No se pudo pre-cargar, intentando igual...");
-                        }
+                        } catch (err) {}
                     }
                     
                     const registration = await navigator.serviceWorker.ready;
-                    
-                    // Usamos un TAG único si es test para forzar que salga una nueva
-                    // y no se actualice silenciosamente la anterior.
                     const tag = isTest ? 'test-' + Date.now() : 'daily-love-msg';
 
                     await registration.showNotification(title, {
                         body: body,
+                        // El icono grande lateral (como en la captura de '8 Ball Pool')
                         icon: NOTIFICATION_ICON_URL,
-                        // Badge: Importante para Android, ayuda a que el layout se expanda
-                        badge: NOTIFICATION_BADGE_URL,
-                        // Image: Big Picture
+                        // El badge PEQUEÑO de la barra de estado (blanco monocromo)
+                        // ESTO ES LO QUE ELIMINA EL LOGO DE CHROME
+                        badge: NOTIFICATION_BADGE_DATA,
+                        // Imagen grande expandible (opcional, como 'BigPicture')
                         image: NOTIFICATION_IMAGE_URL,
-                        // Actions: Botones
                         actions: [
-                            { action: 'open', title: '💌 Ver Mensaje' },
-                            { action: 'love', title: '❤️ ¡Te Amo!' }
+                            { action: 'open', title: '💌 Leer' },
+                            { action: 'love', title: '❤️ Amar' }
                         ],
                         vibrate: [200, 100, 200, 100, 400],
                         tag: tag,
@@ -620,7 +615,6 @@
                     });
                 } catch (e) {
                     console.error("Error mostrando notificación avanzada", e);
-                    // Fallback
                     new Notification(title, { body, icon: NOTIFICATION_ICON_URL });
                 }
             };
@@ -683,7 +677,6 @@
 
             const sendTestNotification = async () => {
                 if (Notification.permission === 'granted') {
-                    // Pasamos true para indicar que es un test y forzar la pre-carga
                     showNotification("TQM 🧡", "Te amo 🧡", true);
                 } else {
                     const permission = await Notification.requestPermission();
