@@ -79,8 +79,11 @@
         // CONFIGURACIÓN DE NOTIFICACIONES "RICH MEDIA"
         const NOTIFICATION_SOUND_URL = "https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3";
         const NOTIFICATION_ICON_URL = "https://img.icons8.com/emoji/512/orange-heart.png";
-        // Imagen romántica de alta calidad para la "Big Picture"
-        const NOTIFICATION_IMAGE_URL = "https://images.unsplash.com/photo-1518568814500-bf5f8ca12f69?w=800&q=80"; 
+        // Usamos un icono monocromático pequeño para el badge (insignia)
+        const NOTIFICATION_BADGE_URL = "https://img.icons8.com/ios-filled/96/ffffff/like.png";
+        
+        // Imagen optimizada (HTTPS, CORS enabled, dimensiones correctas)
+        const NOTIFICATION_IMAGE_URL = "https://images.unsplash.com/photo-1518568814500-bf5f8ca12f69?auto=format&fit=crop&w=1000&h=500&q=80"; 
 
         // Lista de frases románticas
         const lovePhrases = [
@@ -511,6 +514,14 @@
             const [newMemory, setNewMemory] = useState({ image: '', caption: '' });
             const [notificationsEnabled, setNotificationsEnabled] = useState(() => localStorage.getItem('tqm_notifications') === 'true');
 
+            // PRECARGA DE IMAGEN DE NOTIFICACIÓN
+            // Esto asegura que la imagen ya esté en caché cuando se dispara la notificación
+            useEffect(() => {
+                const img = new Image();
+                img.src = NOTIFICATION_IMAGE_URL;
+                console.log("Precargando imagen de notificación:", NOTIFICATION_IMAGE_URL);
+            }, []);
+
             // Función para obtener mensaje del día
             const getDailyMessage = useCallback(() => {
                 const now = new Date();
@@ -564,35 +575,52 @@
                 }
             };
 
-            // ---- FUNCIÓN DE NOTIFICACIÓN MEJORADA (RICH NOTIFICATION) ----
-            const showNotification = async (title, body) => {
+            // ---- FUNCIÓN DE NOTIFICACIÓN MEJORADA (RICH NOTIFICATION 100% SECURE) ----
+            const showNotification = async (title, body, isTest = false) => {
                 if (!('serviceWorker' in navigator)) return;
                 
                 try {
                     playNotificationSound();
+
+                    // TRUCO PARA EL 100%: Forzamos al navegador a descargar la imagen
+                    // en segundo plano ANTES de pedir la notificación.
+                    // Esto asegura que esté "caliente" en la caché de red.
+                    if (isTest) {
+                        try {
+                            await fetch(NOTIFICATION_IMAGE_URL, { mode: 'no-cors' });
+                            console.log("Imagen pre-cargada para test");
+                        } catch (err) {
+                            console.log("No se pudo pre-cargar, intentando igual...");
+                        }
+                    }
                     
-                    // Esperamos a que el Service Worker esté listo para usar las funciones avanzadas
                     const registration = await navigator.serviceWorker.ready;
                     
+                    // Usamos un TAG único si es test para forzar que salga una nueva
+                    // y no se actualice silenciosamente la anterior.
+                    const tag = isTest ? 'test-' + Date.now() : 'daily-love-msg';
+
                     await registration.showNotification(title, {
                         body: body,
                         icon: NOTIFICATION_ICON_URL,
-                        // PROPIEDAD CLAVE: IMAGE (Big Picture en Android)
+                        // Badge: Importante para Android, ayuda a que el layout se expanda
+                        badge: NOTIFICATION_BADGE_URL,
+                        // Image: Big Picture
                         image: NOTIFICATION_IMAGE_URL,
-                        // PROPIEDAD CLAVE: ACTIONS (Botones)
+                        // Actions: Botones
                         actions: [
                             { action: 'open', title: '💌 Ver Mensaje' },
                             { action: 'love', title: '❤️ ¡Te Amo!' }
                         ],
                         vibrate: [200, 100, 200, 100, 400],
-                        tag: 'daily-love-msg',
+                        tag: tag,
                         renotify: true,
-                        requireInteraction: true, // Se queda fija hasta que el usuario interactúe
+                        requireInteraction: true,
                         data: { url: window.location.href }
                     });
                 } catch (e) {
-                    console.error("Error mostrando notificación avanzada, intentando fallback", e);
-                    // Fallback para navegadores que no soporten SW notifications (raro en Android moderno)
+                    console.error("Error mostrando notificación avanzada", e);
+                    // Fallback
                     new Notification(title, { body, icon: NOTIFICATION_ICON_URL });
                 }
             };
@@ -643,7 +671,7 @@
                         setNotificationsEnabled(true);
                         localStorage.setItem('tqm_notifications', 'true');
                         playNotificationSound();
-                        showNotification("¡TQM Activado!", "Te avisaré a las 6:00 AM (Hora Caracas) ❤️");
+                        showNotification("¡TQM Activado!", "Te avisaré a las 6:00 AM (Hora Caracas) ❤️", true);
                     } else {
                         alert("Necesitas dar permiso en los ajustes de tu navegador.");
                     }
@@ -655,11 +683,12 @@
 
             const sendTestNotification = async () => {
                 if (Notification.permission === 'granted') {
-                    showNotification("TQM 🧡", "Te amo 🧡");
+                    // Pasamos true para indicar que es un test y forzar la pre-carga
+                    showNotification("TQM 🧡", "Te amo 🧡", true);
                 } else {
                     const permission = await Notification.requestPermission();
                     if (permission === 'granted') {
-                        showNotification("TQM 🧡", "Te amo 🧡");
+                        showNotification("TQM 🧡", "Te amo 🧡", true);
                     } else {
                         alert("No tienes permisos activados.");
                     }

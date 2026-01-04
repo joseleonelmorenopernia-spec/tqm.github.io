@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'love-app-v5';
+const CACHE_NAME = 'love-app-v7';
 const ASSETS = [
   './',
   './index.html',
@@ -7,7 +7,8 @@ const ASSETS = [
   'https://unpkg.com/@babel/standalone/babel.min.js',
   'https://img.icons8.com/emoji/512/orange-heart.png',
   'https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3',
-  'https://images.unsplash.com/photo-1518568814500-bf5f8ca12f69?w=800&q=80'
+  'https://images.unsplash.com/photo-1518568814500-bf5f8ca12f69?auto=format&fit=crop&w=1000&h=500&q=80',
+  'https://img.icons8.com/ios-filled/96/ffffff/like.png'
 ];
 
 self.addEventListener('install', (event) => {
