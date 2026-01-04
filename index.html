@@ -614,7 +614,7 @@
                     // basándose automáticamente en la fecha actual de Caracas.
                     const msgBody = getDailyMessage();
                     
-                    showNotification("Buenos días mi amor 🧡", msgBody);
+                    showNotification("Buenos días mi amor 🧡", msgBody + " 🧡");
                     localStorage.setItem('tqm_last_notif_date_vzla', todayInVenezuela);
                 }
             }, [notificationsEnabled, getDailyMessage]);
